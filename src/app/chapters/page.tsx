@@ -2,8 +2,6 @@ import { SiteHeader, SiteFooter } from '@/components/site-layout'
 import { chapters } from '@/lib/chapters'
 import Link from 'next/link'
 import { ArrowRight, BookOpen } from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -16,54 +14,50 @@ export default function ChaptersPage() {
     <>
       <SiteHeader />
       <main className="flex-1">
-        <section className="bg-gradient-to-br from-slate-50 to-white border-b">
+        <section className="border-b border-[#eae5db] bg-[#fbf9f6]">
           <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
             <div className="flex items-center gap-3 mb-2">
-              <BookOpen className="h-6 w-6 text-[#0B4F6C]" />
-              <h1 className="text-3xl font-bold text-slate-800">课程章节</h1>
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#f5efe6]">
+                <BookOpen className="h-5 w-5 text-[#d97706]" />
+              </div>
+              <h1 className="text-3xl font-bold text-[#2c2a29]">课程章节</h1>
             </div>
-            <p className="text-muted-foreground max-w-2xl">
+            <p className="text-[#7c756e] max-w-2xl">
               共 {chapters.length} 章，覆盖化工原理全部核心内容，从基础到深入循序渐进
             </p>
           </div>
         </section>
 
-        <section className="py-12">
+        <section className="py-12 bg-[#fbf9f6]">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {chapters.map((chapter) => (
                 <Link key={chapter.slug} href={`/chapters/${chapter.slug}`}>
-                  <Card className="group h-full transition-all duration-200 hover:shadow-lg hover:-translate-y-1 border-slate-200 hover:border-[#1B9AAA]/30 cursor-pointer">
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#0B4F6C]/10 text-2xl">
-                          {chapter.icon}
-                        </div>
-                        <Badge variant="outline" className="text-[#1B9AAA] border-[#1B9AAA]/30">
-                          第{chapter.number}章
-                        </Badge>
-                      </div>
-                      <CardTitle className="mt-4 text-lg text-slate-800 group-hover:text-[#0B4F6C] transition-colors">
-                        {chapter.name}
-                      </CardTitle>
-                      <CardDescription className="text-sm text-muted-foreground">
-                        {chapter.description.length > 100
-                          ? chapter.description.slice(0, 100) + '...'
-                          : chapter.description}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-muted-foreground">
-                          {chapter.topics.length} 个知识点
-                        </span>
-                        <div className="flex items-center text-sm text-[#0B4F6C] font-medium">
-                          <span>开始学习</span>
-                          <ArrowRight className="ml-1 h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <div className="group h-full rounded-xl border border-[#eae5db] bg-white p-5 transition-all duration-200 hover:shadow-lg hover:-translate-y-1 hover:border-[#d97706]/30 cursor-pointer">
+                    <div className="flex items-start justify-between mb-3">
+                      <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-[#f5efe6] text-lg">
+                        {chapter.icon}
+                      </span>
+                      <span className="text-[11px] font-medium text-[#7c756e] bg-[#fbf9f6] px-2.5 py-1 rounded-full border border-[#eae5db]">
+                        第{chapter.number}章
+                      </span>
+                    </div>
+                    <h3 className="text-base font-semibold text-[#2c2a29] group-hover:text-[#d97706] transition-colors">
+                      {chapter.name}
+                    </h3>
+                    <p className="mt-1.5 text-sm text-[#7c756e] line-clamp-2 leading-relaxed">
+                      {chapter.description}
+                    </p>
+                    <div className="mt-4 flex items-center justify-between pt-3 border-t border-[#eae5db]">
+                      <span className="text-xs text-[#7c756e]">
+                        {chapter.topics.length} 个知识点
+                      </span>
+                      <span className="flex items-center text-xs font-medium text-[#d97706]">
+                        开始学习
+                        <ArrowRight className="ml-1 h-3 w-3 transition-transform group-hover:translate-x-1" />
+                      </span>
+                    </div>
+                  </div>
                 </Link>
               ))}
             </div>

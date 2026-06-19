@@ -1,207 +1,180 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { SiteHeader, SiteFooter } from '@/components/site-layout'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Gauge, Info } from 'lucide-react'
+import { ArrowLeft, Gauge, Info } from 'lucide-react'
 import Link from 'next/link'
-import { ChevronRight } from 'lucide-react'
 
-export default function FrictionCalculator() {
-  const [reynolds, setReynolds] = useState('10000')
-  const [roughness, setRoughness] = useState('0.0001')
+export default function FrictionPage() {
+  const [reynolds, setReynolds] = useState('50000')
+  const [roughness, setRoughness] = useState('0.0002')
   const [diameter, setDiameter] = useState('0.05')
   const [length, setLength] = useState('10')
-  const [velocity, setVelocity] = useState('1.0')
-  const [result, setResult] = useState<{
-    lambda: number
-    hf: number
-    regime: string
-  } | null>(null)
+  const [velocity, setVelocity] = useState('1.5')
+  const [result, setResult] = useState<{ lambda: number; hf: number } | null>(null)
 
-  function calculate() {
-    const Re = parseFloat(reynolds)
-    const ε = parseFloat(roughness)
+  const calculate = useCallback(() => {
+    const re = parseFloat(reynolds)
+    const eps = parseFloat(roughness)
     const d = parseFloat(diameter)
-    const L = parseFloat(length)
+    const l = parseFloat(length)
     const u = parseFloat(velocity)
+    const g = 9.81
 
-    if (!Re || Re <= 0 || !d || !L || !u) return
-
-    let lambda: number
-    let regime: string
-
-    if (Re <= 2000) {
-      // 层流：理论解
-      lambda = 64 / Re
-      regime = '层流 (64/Re)'
-    } else {
-      // 湍流：Colebrook 公式迭代近似 (Haaland 公式)
-      const ε_d = ε / d
-      const a = -1.8 * Math.log10((ε_d / 3.7) ** 1.11 + 6.9 / Re)
-      lambda = (1 / a) ** 2
-      regime = '湍流 (Colebrook-Haaland)'
+    if (re > 0 && d > 0 && l > 0 && u > 0) {
+      let lambda: number
+      if (re < 2000) {
+        lambda = 64 / re
+      } else {
+        // Haaland approximation
+        const term = -1.8 * Math.log10(((eps / d) / 3.7) ** 1.11 + 6.9 / re)
+        lambda = (1 / term) ** 2
+      }
+      const hf = lambda * (l / d) * (u ** 2) / (2 * g)
+      setResult({ lambda, hf })
     }
-
-    // 达西-魏斯巴赫公式
-    const hf = lambda * (L / d) * (u ** 2 / (2 * 9.81))
-
-    setResult({
-      lambda: Math.round(lambda * 10000) / 10000,
-      hf: Math.round(hf * 1000) / 1000,
-      regime,
-    })
-  }
+  }, [reynolds, roughness, diameter, length, velocity])
 
   return (
     <>
       <SiteHeader />
-      <main className="flex-1">
-        <div className="border-b bg-slate-50/80">
+      <main className="flex-1 bg-[#fbf9f6]">
+        <div className="border-b border-[#eae5db] bg-white">
           <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Link href="/" className="hover:text-[#0B4F6C]">首页</Link>
-              <ChevronRight className="h-3.5 w-3.5" />
-              <Link href="/tools" className="hover:text-[#0B4F6C]">计算工具</Link>
-              <ChevronRight className="h-3.5 w-3.5" />
-              <span className="text-slate-700 font-medium">流体阻力计算器</span>
-            </div>
+            <Link href="/tools" className="inline-flex items-center gap-1 text-sm text-[#7c756e] hover:text-[#d97706] transition-colors">
+              <ArrowLeft className="h-4 w-4" />
+              返回工具列表
+            </Link>
           </div>
         </div>
 
-        <section className="py-10">
-          <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center gap-3 mb-6">
-              <Gauge className="h-6 w-6 text-[#0B4F6C]" />
-              <div>
-                <h1 className="text-2xl font-bold text-slate-800">流体阻力计算器</h1>
-                <p className="text-sm text-muted-foreground">hf = λ·(l/d)·(u²/2g) — 直管沿程阻力损失</p>
-              </div>
+        <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#f5efe6]">
+              <Gauge className="h-5 w-5 text-[#d97706]" />
             </div>
+            <h1 className="text-3xl font-bold text-[#2c2a29]">流体阻力计算器</h1>
+          </div>
+          <p className="text-[#7c756e] mb-8">hf = λ · (l/d) · (u²/2g) &nbsp;—&nbsp; 直管沿程阻力损失计算</p>
 
-            <div className="grid gap-8 md:grid-cols-2">
-              <Card className="border-slate-200">
-                <CardHeader>
-                  <CardTitle className="text-base text-slate-800">输入参数</CardTitle>
-                  <CardDescription>雷诺数可通过雷诺数计算器获得</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-5">
-                  <div className="space-y-2">
-                    <Label htmlFor="reynolds">雷诺数 Re</Label>
-                    <Input
-                      id="reynolds"
-                      type="number"
-                      value={reynolds}
-                      onChange={(e) => setReynolds(e.target.value)}
-                      placeholder="10000"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="roughness">管壁粗糙度 ε (m)</Label>
-                    <Input
-                      id="roughness"
-                      type="number"
-                      step="0.00001"
-                      value={roughness}
-                      onChange={(e) => setRoughness(e.target.value)}
-                      placeholder="0.0001"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="diameter_f">管道内径 d (m)</Label>
-                    <Input
-                      id="diameter_f"
-                      type="number"
-                      step="0.001"
-                      value={diameter}
-                      onChange={(e) => setDiameter(e.target.value)}
-                      placeholder="0.05"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="length_f">管长 L (m)</Label>
-                    <Input
-                      id="length_f"
-                      type="number"
-                      step="0.1"
-                      value={length}
-                      onChange={(e) => setLength(e.target.value)}
-                      placeholder="10"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="velocity_f">流速 u (m/s)</Label>
-                    <Input
-                      id="velocity_f"
-                      type="number"
-                      step="0.01"
-                      value={velocity}
-                      onChange={(e) => setVelocity(e.target.value)}
-                      placeholder="1.0"
-                    />
-                  </div>
-                  <Button onClick={calculate} className="w-full bg-[#0B4F6C] hover:bg-[#0B4F6C]/90">
-                    计算阻力损失
-                  </Button>
-                </CardContent>
-              </Card>
+          <div className="grid gap-8 lg:grid-cols-5">
+            <Card className="lg:col-span-2 border-[#eae5db] shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-base text-[#2c2a29]">输入参数</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-5">
+                <div className="space-y-2">
+                  <Label className="text-sm text-[#2c2a29]">雷诺数 Re</Label>
+                  <Input
+                    type="number"
+                    value={reynolds}
+                    onChange={(e) => setReynolds(e.target.value)}
+                    className="border-[#eae5db] focus-visible:ring-[#d97706] bg-white"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm text-[#2c2a29]">粗糙度 ε (m)</Label>
+                  <Input
+                    type="number"
+                    value={roughness}
+                    onChange={(e) => setRoughness(e.target.value)}
+                    className="border-[#eae5db] focus-visible:ring-[#d97706] bg-white"
+                    placeholder="0.0002 (钢管)"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm text-[#2c2a29]">管径 d (m)</Label>
+                  <Input
+                    type="number"
+                    value={diameter}
+                    onChange={(e) => setDiameter(e.target.value)}
+                    className="border-[#eae5db] focus-visible:ring-[#d97706] bg-white"
+                    placeholder="0.05"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm text-[#2c2a29]">管长 l (m)</Label>
+                  <Input
+                    type="number"
+                    value={length}
+                    onChange={(e) => setLength(e.target.value)}
+                    className="border-[#eae5db] focus-visible:ring-[#d97706] bg-white"
+                    placeholder="10"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm text-[#2c2a29]">流速 u (m/s)</Label>
+                  <Input
+                    type="number"
+                    value={velocity}
+                    onChange={(e) => setVelocity(e.target.value)}
+                    className="border-[#eae5db] focus-visible:ring-[#d97706] bg-white"
+                    placeholder="1.5"
+                  />
+                </div>
+                <Button
+                  onClick={calculate}
+                  className="w-full bg-[#d97706] hover:bg-[#d97706]/90 text-white shadow-sm"
+                >
+                  计算
+                </Button>
+              </CardContent>
+            </Card>
 
-              <div className="space-y-6">
-                {result && (
-                  <>
-                    <Card className="border-slate-200">
-                      <CardHeader>
-                        <CardTitle className="text-base text-slate-800">计算结果</CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <div className="text-center py-2">
-                          <div className="text-sm text-muted-foreground">沿程阻力损失 hf</div>
-                          <div className="text-3xl font-bold text-slate-800 font-mono">
-                            {result.hf} m
-                          </div>
-                          <div className="text-xs text-muted-foreground mt-1">(米流体柱高度)</div>
+            <Card className="lg:col-span-3 border-[#eae5db] shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-base text-[#2c2a29]">计算结果</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {result === null ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-[#7c756e]">
+                    <Info className="h-10 w-10 mb-3" />
+                    <p className="text-sm">输入参数后点击"计算"查看结果</p>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="p-5 rounded-xl border border-[#eae5db] bg-[#fbf9f6]">
+                        <div className="text-xs text-[#7c756e] mb-1">摩擦系数 λ</div>
+                        <div className="text-2xl font-bold text-[#2c2a29] font-mono">
+                          {result.lambda.toFixed(4)}
                         </div>
-                        <div className="border-t pt-4 grid grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <div className="text-muted-foreground">摩擦系数 λ</div>
-                            <div className="font-mono font-medium text-slate-800">{result.lambda}</div>
-                          </div>
-                          <div>
-                            <div className="text-muted-foreground">计算方法</div>
-                            <div className="font-medium text-slate-800">{result.regime}</div>
-                          </div>
+                      </div>
+                      <div className="p-5 rounded-xl border border-[#eae5db] bg-[#fbf9f6]">
+                        <div className="text-xs text-[#7c756e] mb-1">阻力损失 hf (m 液柱)</div>
+                        <div className="text-2xl font-bold text-[#d97706] font-mono">
+                          {result.hf.toFixed(3)}
                         </div>
-                      </CardContent>
-                    </Card>
+                      </div>
+                    </div>
 
-                    <Alert className="border-slate-200 bg-slate-50">
-                      <Info className="h-4 w-4 text-[#0B4F6C]" />
-                      <AlertTitle className="text-sm font-medium text-slate-800">说明</AlertTitle>
-                      <AlertDescription className="text-sm text-muted-foreground mt-1">
-                        湍流区使用 Haaland 公式近似 Colebrook 方程，精度满足工程计算要求。
-                        层流区使用理论解 λ = 64/Re。结果未包含局部阻力。
-                      </AlertDescription>
-                    </Alert>
-                  </>
+                    <div className="p-4 rounded-xl border border-[#eae5db] bg-white">
+                      <span className="text-xs font-medium text-[#d97706] uppercase tracking-wider">详细计算</span>
+                      <pre className="mt-2 text-sm font-mono text-[#7c756e] leading-relaxed">
+                        λ = {result.lambda.toFixed(4)}{'\n'}
+                        hf = λ · (l/d) · (u²/2g){'\n'}
+                        &nbsp;&nbsp;= {result.lambda.toFixed(4)} × ({length}/{diameter}) × ({velocity}²/(2×9.81)){'\n'}
+                        &nbsp;&nbsp;= {result.hf.toFixed(3)} m 液柱
+                      </pre>
+                    </div>
+
+                    <div className="p-4 rounded-xl border border-[#eae5db] bg-[#fbf9f6]">
+                      <span className="text-xs font-medium text-[#d97706] uppercase tracking-wider">参考：当量粗糙度 ε</span>
+                      <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
+                        <div className="flex justify-between"><span className="text-[#7c756e]">拉拔钢管</span><span className="font-mono">0.000015 m</span></div>
+                        <div className="flex justify-between"><span className="text-[#7c756e]">焊接钢管</span><span className="font-mono">0.0002 m</span></div>
+                        <div className="flex justify-between"><span className="text-[#7c756e]">铸铁管</span><span className="font-mono">0.0003 m</span></div>
+                        <div className="flex justify-between"><span className="text-[#7c756e]">混凝土管</span><span className="font-mono">0.001~0.01 m</span></div>
+                      </div>
+                    </div>
+                  </div>
                 )}
-
-                <Card className="border-slate-200 bg-slate-50">
-                  <CardHeader>
-                    <CardTitle className="text-sm text-slate-800">参考粗糙度</CardTitle>
-                  </CardHeader>
-                  <CardContent className="text-sm text-muted-foreground space-y-1.5">
-                    <p>• 光滑管（铜管、玻璃管）：ε ≈ 1.5×10⁻⁶ m</p>
-                    <p>• 钢管：ε ≈ 0.05~0.1 mm</p>
-                    <p>• 铸铁管：ε ≈ 0.2~0.5 mm</p>
-                    <p>• 混凝土管：ε ≈ 0.3~3 mm</p>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           </div>
         </section>
       </main>
