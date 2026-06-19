@@ -1,160 +1,183 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import { SiteHeader, SiteFooter } from '@/components/site-layout'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Droplets, Info } from 'lucide-react'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Droplets, Info } from 'lucide-react'
 import Link from 'next/link'
+import { ChevronRight } from 'lucide-react'
 
-export default function ReynoldsPage() {
-  const [density, setDensity] = useState('998')
-  const [velocity, setVelocity] = useState('1.5')
+export default function ReynoldsCalculator() {
+  const [density, setDensity] = useState('1000')
+  const [velocity, setVelocity] = useState('1.0')
   const [diameter, setDiameter] = useState('0.05')
   const [viscosity, setViscosity] = useState('0.001')
-  const [result, setResult] = useState<number | null>(null)
+  const [result, setResult] = useState<{
+    re: number
+    regime: string
+    color: string
+    desc: string
+  } | null>(null)
 
-  const calculate = useCallback(() => {
-    const rho = parseFloat(density)
+  function calculate() {
+    const ρ = parseFloat(density)
     const u = parseFloat(velocity)
     const d = parseFloat(diameter)
-    const mu = parseFloat(viscosity)
-    
-    if (rho && u && d && mu && mu > 0) {
-      const re = (rho * u * d) / mu
-      setResult(re)
-    }
-  }, [density, velocity, diameter, viscosity])
+    const μ = parseFloat(viscosity)
 
-  const getFlowStatus = (re: number) => {
-    if (re < 2000) return { text: '层流 (Laminar)', color: 'text-green-600', bg: 'bg-green-50 border-green-200' }
-    if (re < 4000) return { text: '过渡流 (Transition)', color: 'text-amber-600', bg: 'bg-amber-50 border-amber-200' }
-    return { text: '湍流 (Turbulent)', color: 'text-red-600', bg: 'bg-red-50 border-red-200' }
+    if (!ρ || !u || !d || !μ || μ === 0) return
+
+    const re = (ρ * u * d) / μ
+    let regime: string
+    let color: string
+    let desc: string
+
+    if (re <= 2000) {
+      regime = '层流 (Laminar)'
+      color = 'text-blue-600 bg-blue-50 border-blue-200'
+      desc = '流体分层流动，质点沿轴向做规则运动，无径向混合。适合粘度大的流体或低速小管径条件。'
+    } else if (re >= 4000) {
+      regime = '湍流 (Turbulent)'
+      color = 'text-red-600 bg-red-50 border-red-200'
+      desc = '流体质点做不规则运动，存在强烈的径向混合与涡旋。传热传质效率高，但流动阻力大。'
+    } else {
+      regime = '过渡区 (Transition)'
+      color = 'text-amber-600 bg-amber-50 border-amber-200'
+      desc = '流动状态不稳定，介于层流与湍流之间。实际工程设计应避免在此区域操作。'
+    }
+
+    setResult({ re: Math.round(re * 100) / 100, regime, color, desc })
   }
 
   return (
     <>
       <SiteHeader />
-      <main className="flex-1 bg-[#fbf9f6]">
-        <div className="border-b border-[#eae5db] bg-white">
+      <main className="flex-1">
+        <div className="border-b bg-slate-50/80">
           <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
-            <Link href="/tools" className="inline-flex items-center gap-1 text-sm text-[#7c756e] hover:text-[#d97706] transition-colors">
-              <ArrowLeft className="h-4 w-4" />
-              返回工具列表
-            </Link>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Link href="/" className="hover:text-[#0B4F6C]">首页</Link>
+              <ChevronRight className="h-3.5 w-3.5" />
+              <Link href="/tools" className="hover:text-[#0B4F6C]">计算工具</Link>
+              <ChevronRight className="h-3.5 w-3.5" />
+              <span className="text-slate-700 font-medium">雷诺数计算器</span>
+            </div>
           </div>
         </div>
 
-        <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#f5efe6]">
-              <Droplets className="h-5 w-5 text-[#d97706]" />
+        <section className="py-10">
+          <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center gap-3 mb-6">
+              <Droplets className="h-6 w-6 text-[#0B4F6C]" />
+              <div>
+                <h1 className="text-2xl font-bold text-slate-800">雷诺数计算器</h1>
+                <p className="text-sm text-muted-foreground">Re = duρ/μ — 判断流体流动状态</p>
+              </div>
             </div>
-            <h1 className="text-3xl font-bold text-[#2c2a29]">雷诺数计算器</h1>
-          </div>
-          <p className="text-[#7c756e] mb-8">Re = ρ · u · d / μ &nbsp;—&nbsp; 判断流体流动状态</p>
 
-          <div className="grid gap-8 lg:grid-cols-5">
-            <Card className="lg:col-span-2 border-[#eae5db] shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-base text-[#2c2a29]">输入参数</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-5">
-                <div className="space-y-2">
-                  <Label className="text-sm text-[#2c2a29]">密度 ρ (kg/m³)</Label>
-                  <Input
-                    type="number"
-                    value={density}
-                    onChange={(e) => setDensity(e.target.value)}
-                    className="border-[#eae5db] focus-visible:ring-[#d97706] bg-white"
-                    placeholder="998 (水)"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-sm text-[#2c2a29]">流速 u (m/s)</Label>
-                  <Input
-                    type="number"
-                    value={velocity}
-                    onChange={(e) => setVelocity(e.target.value)}
-                    className="border-[#eae5db] focus-visible:ring-[#d97706] bg-white"
-                    placeholder="1.5"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-sm text-[#2c2a29]">管径 d (m)</Label>
-                  <Input
-                    type="number"
-                    value={diameter}
-                    onChange={(e) => setDiameter(e.target.value)}
-                    className="border-[#eae5db] focus-visible:ring-[#d97706] bg-white"
-                    placeholder="0.05"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-sm text-[#2c2a29]">动力粘度 μ (Pa·s)</Label>
-                  <Input
-                    type="number"
-                    value={viscosity}
-                    onChange={(e) => setViscosity(e.target.value)}
-                    className="border-[#eae5db] focus-visible:ring-[#d97706] bg-white"
-                    placeholder="0.001 (水, 20°C)"
-                  />
-                </div>
-                <Button
-                  onClick={calculate}
-                  className="w-full bg-[#d97706] hover:bg-[#d97706]/90 text-white shadow-sm"
-                >
-                  计算
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card className="lg:col-span-3 border-[#eae5db] shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-base text-[#2c2a29]">计算结果</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {result === null ? (
-                  <div className="flex flex-col items-center justify-center py-12 text-[#7c756e]">
-                    <Info className="h-10 w-10 mb-3" />
-                    <p className="text-sm">输入参数后点击"计算"查看结果</p>
+            <div className="grid gap-8 md:grid-cols-2">
+              <Card className="border-slate-200">
+                <CardHeader>
+                  <CardTitle className="text-base text-slate-800">输入参数</CardTitle>
+                  <CardDescription>请输入流体物性与管道条件</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-5">
+                  <div className="space-y-2">
+                    <Label htmlFor="density">流体密度 ρ (kg/m³)</Label>
+                    <Input
+                      id="density"
+                      type="number"
+                      step="0.1"
+                      value={density}
+                      onChange={(e) => setDensity(e.target.value)}
+                      placeholder="1000"
+                    />
                   </div>
-                ) : (
-                  <div className="space-y-6">
-                    <div className="p-6 rounded-xl border border-[#eae5db] bg-[#fbf9f6]">
-                      <div className="text-xs text-[#7c756e] mb-1">雷诺数 Re</div>
-                      <div className="text-3xl font-bold text-[#2c2a29] font-mono">
-                        {result.toLocaleString(undefined, { maximumFractionDigits: 1 })}
-                      </div>
-                    </div>
-
-                    <div className={`p-5 rounded-xl border ${getFlowStatus(result).bg}`}>
-                      <div className="text-xs text-[#7c756e] mb-1">流动状态</div>
-                      <div className={`text-lg font-bold ${getFlowStatus(result).color}`}>
-                        {getFlowStatus(result).text}
-                      </div>
-                      <p className="text-sm text-[#7c756e] mt-2">
-                        {result < 2000
-                          ? '层流：流体呈平行层状流动，黏性力主导'
-                          : result < 4000
-                          ? '过渡流：流态不稳定，处于层流向湍流的过渡区'
-                          : '湍流：流体呈无序涡旋运动，惯性力主导'}
-                      </p>
-                    </div>
-
-                    <div className="p-4 rounded-xl border border-[#eae5db] bg-white">
-                      <span className="text-xs font-medium text-[#d97706] uppercase tracking-wider">计算依据</span>
-                      <pre className="mt-2 text-sm font-mono text-[#7c756e]">
-                        Re = {density} × {velocity} × {diameter} / {viscosity}
-                        {'\n'}= {result.toLocaleString(undefined, { maximumFractionDigits: 1 })}
-                      </pre>
-                    </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="velocity">流速 u (m/s)</Label>
+                    <Input
+                      id="velocity"
+                      type="number"
+                      step="0.01"
+                      value={velocity}
+                      onChange={(e) => setVelocity(e.target.value)}
+                      placeholder="1.0"
+                    />
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="diameter">管道内径 d (m)</Label>
+                    <Input
+                      id="diameter"
+                      type="number"
+                      step="0.001"
+                      value={diameter}
+                      onChange={(e) => setDiameter(e.target.value)}
+                      placeholder="0.05"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="viscosity">流体粘度 μ (Pa·s)</Label>
+                    <Input
+                      id="viscosity"
+                      type="number"
+                      step="0.0001"
+                      value={viscosity}
+                      onChange={(e) => setViscosity(e.target.value)}
+                      placeholder="0.001"
+                    />
+                  </div>
+                  <Button onClick={calculate} className="w-full bg-[#0B4F6C] hover:bg-[#0B4F6C]/90">
+                    计算雷诺数
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <div className="space-y-6">
+                {result && (
+                  <>
+                    <Card className="border-slate-200">
+                      <CardHeader>
+                        <CardTitle className="text-base text-slate-800">计算结果</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-center py-4">
+                          <div className="text-4xl font-bold text-slate-800 font-mono">
+                            Re = {result.re.toLocaleString()}
+                          </div>
+                          <div className={`mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-full border ${result.color}`}>
+                            <Info className="h-4 w-4" />
+                            <span className="font-medium">{result.regime}</span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Alert className="border-slate-200 bg-slate-50">
+                      <Info className="h-4 w-4 text-[#0B4F6C]" />
+                      <AlertTitle className="text-sm font-medium text-slate-800">流动状态说明</AlertTitle>
+                      <AlertDescription className="text-sm text-muted-foreground mt-1">
+                        {result.desc}
+                      </AlertDescription>
+                    </Alert>
+                  </>
                 )}
-              </CardContent>
-            </Card>
+
+                <Card className="border-slate-200 bg-slate-50">
+                  <CardHeader>
+                    <CardTitle className="text-sm text-slate-800">参考值</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-sm text-muted-foreground space-y-1.5">
+                    <p>• 常温水的密度 ≈ 1000 kg/m³，粘度 ≈ 0.001 Pa·s</p>
+                    <p>• 空气密度 ≈ 1.2 kg/m³，粘度 ≈ 1.8×10⁻⁵ Pa·s</p>
+                    <p>• Re ≤ 2000：层流；Re ≥ 4000：湍流</p>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
           </div>
         </section>
       </main>
