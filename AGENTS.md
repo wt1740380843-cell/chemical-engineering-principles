@@ -13,53 +13,63 @@
 ```
 ├── public/                 # 静态资源
 ├── scripts/                # 构建与启动脚本
-│   ├── build.sh            # 构建脚本
-│   ├── dev.sh              # 开发环境启动脚本
-│   ├── prepare.sh          # 预处理脚本
-│   └── start.sh            # 生产环境启动脚本
 ├── src/
 │   ├── app/                # 页面路由与布局
-│   ├── components/ui/      # Shadcn UI 组件库
+│   │   ├── chapters/       # 课程章节页面
+│   │   │   └── [slug]/     # 章节详情页（动态路由）
+│   │   ├── tools/          # 化工计算工具
+│   │   │   ├── reynolds/   # 雷诺数计算器
+│   │   │   ├── friction/   # 流体阻力计算器
+│   │   │   └── heat-transfer/ # 传热系数估算器
+│   │   ├── quiz/           # 自测练习
+│   │   ├── layout.tsx      # 根布局
+│   │   ├── page.tsx        # 首页
+│   │   └── globals.css     # 全局样式
+│   ├── components/
+│   │   ├── ui/             # Shadcn UI 组件库
+│   │   └── site-layout.tsx # 网站导航栏与页脚
 │   ├── hooks/              # 自定义 Hooks
-│   ├── lib/                # 工具库
-│   │   └── utils.ts        # 通用工具函数 (cn)
-│   └── server.ts           # 自定义服务端入口
+│   └── lib/
+│       ├── chapters.ts     # 章节数据（9大章节核心内容）
+│       └── utils.ts        # 通用工具函数
+├── DESIGN.md               # 设计规范文档
 ├── next.config.ts          # Next.js 配置
-├── package.json            # 项目依赖管理
-└── tsconfig.json           # TypeScript 配置
+└── package.json            # 项目依赖管理
 ```
 
-- 项目文件（如 app 目录、pages 目录、components 等）默认初始化到 `src/` 目录下。
+## 页面路由
+
+| 路由 | 说明 | 类型 |
+|------|------|------|
+| `/` | 首页 - 课程概览与导航 | 静态 |
+| `/chapters` | 章节列表页 | 静态 |
+| `/chapters/[slug]` | 章节详情页（含知识点Tab） | 动态路由 |
+| `/tools` | 计算工具列表页 | 静态 |
+| `/tools/reynolds` | 雷诺数计算器 | 客户端交互 |
+| `/tools/friction` | 流体阻力计算器 | 客户端交互 |
+| `/tools/heat-transfer` | 传热系数估算器 | 客户端交互 |
+| `/quiz` | 自测练习（10题选择题） | 客户端交互 |
+
+## 9大课程章节
+
+1. 流体流动 - 静力学、伯努利方程、雷诺数、阻力计算
+2. 流体输送机械 - 离心泵、风机、压缩机
+3. 非均相物系分离 - 沉降、过滤、离心分离
+4. 传热 - 热传导、对流传热、换热器
+5. 蒸发 - 单效/多效蒸发
+6. 蒸馏 - 汽液平衡、精馏计算、McCabe-Thiele
+7. 吸收 - 亨利定律、双膜理论、吸收塔
+8. 萃取 - 液液萃取、相图、级数计算
+9. 干燥 - 湿空气、干燥速率、恒速/降速段
 
 ## 包管理规范
 
 **仅允许使用 pnpm** 作为包管理器，**严禁使用 npm 或 yarn**。
-**常用命令**：
-- 安装依赖：`pnpm add <package>`
-- 安装开发依赖：`pnpm add -D <package>`
-- 安装所有依赖：`pnpm install`
-- 移除依赖：`pnpm remove <package>`
 
 ## 开发规范
 
-### 编码规范
-
-- 默认按 TypeScript `strict` 心智写代码；优先复用当前作用域已声明的变量、函数、类型和导入，禁止引用未声明标识符或拼错变量名。
-- 禁止隐式 `any` 和 `as any`；函数参数、返回值、解构项、事件对象、`catch` 错误在使用前应有明确类型或先完成类型收窄，并清理未使用的变量和导入。
-
-### next.config 配置规范
-
-- 配置的路径不要写死绝对路径，必须使用 path.resolve(__dirname, ...)、import.meta.dirname 或 process.cwd() 动态拼接。
-
-### Hydration 问题防范
-
-1. 严禁在 JSX 渲染逻辑中直接使用 typeof window、Date.now()、Math.random() 等动态数据。**必须使用 'use client' 并配合 useEffect + useState 确保动态内容仅在客户端挂载后渲染**；同时严禁非法 HTML 嵌套（如 <p> 嵌套 <div>）。
-2. **禁止使用 head 标签**，优先使用 metadata，详见文档：https://nextjs.org/docs/app/api-reference/functions/generate-metadata
-   1. 三方 CSS、字体等资源可在 `globals.css` 中顶部通过 `@import` 引入或使用 next/font
-   2. preload, preconnect, dns-prefetch 通过 ReactDOM 的 preload、preconnect、dns-prefetch 方法引入
-   3. json-ld 可阅读 https://nextjs.org/docs/app/guides/json-ld
-
-## UI 设计与组件规范 (UI & Styling Standards)
-
-- 模板默认预装核心组件库 `shadcn/ui`，位于`src/components/ui/`目录下
-- Next.js 项目**必须默认**采用 shadcn/ui 组件、风格和规范，**除非用户指定用其他的组件和规范。**
+- TypeScript strict 模式
+- 禁止隐式 any 和 as any
+- 客户端交互组件使用 'use client' 指令
+- Hydration 预防：动态数据使用 useEffect + useState 确保仅在客户端挂载后渲染
+- UI 采用 shadcn/ui 组件规范
