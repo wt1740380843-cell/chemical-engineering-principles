@@ -1,6 +1,7 @@
+import type { NextConfig } from "next";
+
 const nextConfig: NextConfig = {
-  // outputFileTracingRoot: path.resolve(__dirname, '../../'),  // Uncomment and add 'import path from "path"' if needed
-  /* config options here */
+  /* 基础配置 */
   allowedDevOrigins: ['*.dev.coze.site'],
   images: {
     remotePatterns: [
@@ -11,7 +12,7 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  // 下面是强行关闭检查的“免死金牌”
+  // 强制关闭检查，确保不卡部署
   typescript: {
     ignoreBuildErrors: true,
   },
