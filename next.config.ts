@@ -1,24 +1,19 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  allowedDevOrigins: ['*.dev.coze.site'],
-  images: {
-    remotePatterns: [{ protocol: 'https', hostname: '*', pathname: '/**' }],
-  },
+  // 核心：彻底关闭类型检查和格式校验，让编译器“闭眼”工作
   typescript: { ignoreBuildErrors: true },
   eslint: { ignoreDuringBuilds: true },
   
-  // 关键补丁：屏蔽掉报错的模块，让它在云端也能跑
+  // 核心：强行关闭 Webpack 的复杂缓存和多线程，防止服务器崩溃
   webpack: (config, { isServer }) => {
-    if (!isServer) {
-      config.resolve.fallback = {
-        fs: false,
-        module: false,
-        v8: false,
-      };
-    }
+    config.optimization.minimize = false; // 关闭压缩，极大减少构建时间
+    config.resolve.fallback = { fs: false, module: false };
     return config;
   },
+  
+  // 核心：跳过某些不必要的静态分析
+  staticPageGenerationTimeout: 1000, 
 };
 
 export default nextConfig;
